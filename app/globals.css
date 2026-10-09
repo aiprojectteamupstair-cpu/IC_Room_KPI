@@ -1,0 +1,282 @@
+@import "tailwindcss";
+@theme inline {
+  --color-primary: #c8463c;
+  --color-background: #f6f7f9;
+  --color-foreground: #253043;
+  --color-muted: #f0f2f5;
+  --color-muted-foreground: #687386;
+  --color-border: #e9ecf1;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+html {
+  scroll-padding-bottom: 120px;
+}
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+.app-content {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+}
+.mini-calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.mini-calendar-day {
+  min-height: 44px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: #f8f9fb;
+}
+.mini-calendar-day:hover {
+  background: var(--color-muted);
+}
+.mini-calendar-day[aria-current="date"] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: white;
+}
+.mini-calendar-day[data-today="true"]:not([aria-current]) {
+  border-color: #f1c6c0;
+  background: #fff0ed;
+  color: var(--color-primary);
+}
+.app-bar {
+  background: rgb(246 247 249 / 92%);
+  backdrop-filter: blur(20px);
+  padding-top: env(safe-area-inset-top);
+}
+.bottom-dock {
+  position: fixed;
+  z-index: 40;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(calc(100% - 28px), 460px);
+  display: grid;
+  align-items: end;
+  padding: 8px 8px 6px;
+  border: 1px solid rgb(255 255 255 / 95%);
+  border-radius: 28px;
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 8px 40px rgb(37 48 67 / 12%),
+    0 1px 4px rgb(37 48 67 / 4%);
+}
+.dock-link {
+  display: flex;
+  min-height: 56px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: 20px;
+  color: var(--color-muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+  transition:
+    background 0.18s,
+    color 0.18s;
+}
+.dock-link:hover {
+  background: var(--color-muted);
+}
+.dock-link[aria-current="page"] {
+  color: var(--color-primary);
+  background: #fff0ed;
+}
+.dock-icon {
+  display: flex;
+  height: 27px;
+  align-items: center;
+  justify-content: center;
+}
+.dock-link-featured .dock-icon {
+  height: 48px;
+  width: 54px;
+  margin-top: -23px;
+  margin-bottom: 2px;
+  border: 4px solid white;
+  border-radius: 19px;
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 5px 14px rgb(200 70 60 / 20%);
+}
+.dock-link-featured[aria-current="page"] {
+  background: transparent;
+}
+.account-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 12px);
+  z-index: 45;
+  width: min(280px, calc(100vw - 32px));
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  background: white;
+  padding: 16px;
+  box-shadow: 0 12px 40px rgb(37 48 67 / 12%);
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+@layer base {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled),
+  select {
+    cursor: pointer;
+  }
+  input,
+  select,
+  textarea {
+    width: 100%;
+    min-height: 48px;
+    min-width: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    background: #f8f9fb;
+    font: inherit;
+    font-size: 16px;
+    color: var(--color-foreground);
+  }
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  a {
+    text-decoration: none;
+  }
+  ::selection {
+    background: #ffe1e4;
+  }
+}
+.field-error {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #b51224;
+}
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+.setting-switch {
+  appearance: none;
+  position: relative;
+  width: 48px;
+  height: 28px;
+  min-height: 28px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 99px;
+  background: #dce1e9;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.setting-switch::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
+  transition: transform 0.2s;
+}
+.setting-switch:checked {
+  background: var(--color-primary);
+}
+.setting-switch:checked::before {
+  transform: translateX(20px);
+}
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  transform: translateY(-150%);
+  border-radius: 12px;
+  padding: 12px 16px;
+  background: white;
+  color: var(--color-primary);
+  box-shadow: 0 4px 20px rgb(37 48 67 / 15%);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}
+.dialog-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
+  max-height: 92dvh;
+  width: 100%;
+  overflow-y: auto;
+  border-radius: 28px 28px 0 0;
+  padding: 28px 20px calc(24px + env(safe-area-inset-bottom));
+  background: white;
+  box-shadow: 0 -8px 50px rgb(37 48 67 / 12%);
+}
+.dialog-sheet::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: -14px auto 22px;
+  border-radius: 99px;
+  background: #dce1e9;
+}
+@media (min-width: 640px) {
+  .dialog-sheet {
+    bottom: auto;
+    top: 50%;
+    left: 50%;
+    width: calc(100% - 3rem);
+    max-width: 560px;
+    transform: translate(-50%, -50%);
+    border-radius: 28px;
+    padding: 28px;
+  }
+  .dialog-sheet::before {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}

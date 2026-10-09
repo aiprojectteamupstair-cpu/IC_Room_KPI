@@ -1,0 +1,52 @@
+{
+  "name": "innovation-centre",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "predev": "node scripts/local-dev.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:local:setup": "node scripts/local-migrate.mjs",
+    "db:local:start": "powershell -ExecutionPolicy Bypass -File scripts/local-db.ps1 start",
+    "db:local:stop": "powershell -ExecutionPolicy Bypass -File scripts/local-db.ps1 stop",
+    "db:local:test": "node scripts/local-db-test.mjs",
+    "admin:local-reset": "node scripts/local-admin-reset.mjs",
+    "test:local": "node scripts/local-smoke.mjs"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "5.9.1",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.117.3",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "date-fns": "4.4.0",
+    "exceljs": "4.4.0",
+    "lucide-react": "1.52.0",
+    "next": "16.4.0",
+    "pg": "8.23.1",
+    "radix-ui": "1.7.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-hook-form": "7.89.0",
+    "recharts": "3.10.1",
+    "server-only": "0.0.1",
+    "sonner": "2.0.8",
+    "tailwind-merge": "3.7.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "26.6.4",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "prettier": "3.9.8",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2"
+  }
+}
