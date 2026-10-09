@@ -16,7 +16,10 @@ export async function getRooms(): Promise<Room[]> {
   if (isDemo()) return [demoRoom];
   const db = await supabaseServer();
   const { data, error } = await db.from("rooms").select("*").order("created_at");
-  if (error) throw new Error("Could not load rooms. Please try again.");
+  if (error) {
+    console.error("[Supabase] Could not load rooms", { code: error.code, message: error.message });
+    throw new Error("Could not load rooms. Please try again.");
+  }
   return data as Room[];
 }
 export async function getSchedule(

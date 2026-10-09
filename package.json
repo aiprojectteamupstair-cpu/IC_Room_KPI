@@ -16,7 +16,8 @@
     "db:local:stop": "powershell -ExecutionPolicy Bypass -File scripts/local-db.ps1 stop",
     "db:local:test": "node scripts/local-db-test.mjs",
     "admin:local-reset": "node scripts/local-admin-reset.mjs",
-    "test:local": "node scripts/local-smoke.mjs"
+    "test:local": "node scripts/local-smoke.mjs",
+    "db:supabase:check": "node scripts/check-supabase.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",

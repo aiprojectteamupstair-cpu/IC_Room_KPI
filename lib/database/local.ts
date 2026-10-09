@@ -7,6 +7,13 @@ types.setTypeParser(20, (value) => Number(value));
 const globalDb = globalThis as typeof globalThis & { icPool?: Pool; icPoolUrl?: string };
 export function localPool() {
   if (!process.env.DATABASE_URL) throw new Error("Local PostgreSQL is not configured.");
+  if (process.env.VERCEL === "1") {
+    const host = new URL(process.env.DATABASE_URL).hostname;
+    if (["localhost", "127.0.0.1", "[::1]", "0.0.0.0"].includes(host))
+      throw new Error(
+        "Vercel cannot connect to a localhost database. Configure the hosted Supabase environment variables and redeploy.",
+      );
+  }
   if (globalDb.icPool && globalDb.icPoolUrl !== process.env.DATABASE_URL) {
     void globalDb.icPool
       .end()

@@ -1,6 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { configured, isDemo, isLocal } from "@/lib/supabase/config";
+import {
+  configured,
+  isDemo,
+  isLocal,
+  publicSupabaseUrl,
+  publicSupabaseKey,
+} from "@/lib/supabase/config";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/database/session";
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -22,20 +28,16 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     return response;
   }
-  const db = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (items) => {
-          items.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
-          items.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
-        },
+  const db = createServerClient(publicSupabaseUrl()!, publicSupabaseKey()!, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: (items) => {
+        items.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        items.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
       },
     },
-  );
+  });
   const {
     data: { user },
   } = await db.auth.getUser();

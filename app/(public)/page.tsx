@@ -2,7 +2,15 @@ import { getRooms } from "@/lib/supabase/queries";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { AutoRefresh } from "@/components/layout/auto-refresh";
-import { Building2, Users, Clock3, CalendarDays, CheckCircle2, Sparkles } from "lucide-react";
+import {
+  Building2,
+  Users,
+  Clock3,
+  Mail,
+  MessageCircle,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 import { displayTime } from "@/lib/booking/time";
 export default async function Explore() {
   const rooms = (await getRooms()).filter((room) => room.is_active);
@@ -69,38 +77,34 @@ export default async function Explore() {
         </section>
         <Card>
           <CardContent className="p-5 sm:p-7">
-            <h2 className="mb-5 text-lg font-semibold">Make yourself at home</h2>
-            <ol className="space-y-5">
-              {[
-                {
-                  icon: CalendarDays,
-                  title: "Find a day",
-                  text: "The Calendar tab shows reservations and available times.",
-                },
-                {
-                  icon: Clock3,
-                  title: "Choose your time",
-                  text: "Tap a date in the mini calendar to see its schedule.",
-                },
-                {
-                  icon: CheckCircle2,
-                  title: "Send your request",
-                  text: "Book a space opens the form with your selected date and room.",
-                },
-              ].map(({ icon: Icon, title, text }, i) => (
-                <li key={title} className="flex gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-                    <Icon size={18} />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-semibold">
-                      {i + 1}. {title}
-                    </h3>
-                    <p className="mt-1 text-xs leading-6 text-muted-foreground">{text}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
+            <h2 className="mb-5 text-lg font-semibold">Contact us</h2>
+            <dl className="space-y-5">
+              <div className="flex gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                  <Mail size={18} aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <dt className="text-sm font-semibold">Email</dt>
+                  <dd className="mt-1 text-sm leading-6 text-muted-foreground">
+                    <a
+                      href="mailto:innovation.centre4@gmail.com"
+                      className="break-all underline-offset-4 hover:text-primary hover:underline"
+                    >
+                      innovation.centre4@gmail.com
+                    </a>
+                  </dd>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                  <MessageCircle size={18} aria-hidden="true" />
+                </span>
+                <div>
+                  <dt className="text-sm font-semibold">Viber</dt>
+                  <dd className="mt-1 text-sm leading-6 text-muted-foreground">09880768700</dd>
+                </div>
+              </div>
+            </dl>
           </CardContent>
         </Card>
       </div>
