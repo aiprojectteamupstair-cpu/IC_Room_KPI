@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Sparkles,
@@ -9,6 +9,8 @@ import {
   ClipboardList,
   ChartNoAxesCombined,
   Settings,
+  LoaderCircle,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,26 @@ const adminLinks = [
   { href: "/admin/kpi", label: "Insights", icon: ChartNoAxesCombined },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
+function NavContent({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span className="dock-content" data-pending={pending || undefined} aria-busy={pending}>
+      <span className="dock-icon">
+        {pending ? (
+          <LoaderCircle size={22} strokeWidth={1.8} aria-hidden="true" className="dock-spinner" />
+        ) : (
+          <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
+        )}
+      </span>
+      <span>{label}</span>
+      {pending && (
+        <span role="status" className="sr-only">
+          Opening {label}…
+        </span>
+      )}
+    </span>
+  );
+}
 export function BottomNav({ admin = false }: { admin?: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -50,10 +72,7 @@ export function BottomNav({ admin = false }: { admin?: boolean }) {
           }
           className={cn("dock-link", "featured" in item && item.featured && "dock-link-featured")}
         >
-          <span className="dock-icon">
-            <Icon size={22} strokeWidth={1.8} aria-hidden="true" />
-          </span>
-          <span>{label}</span>
+          <NavContent icon={Icon} label={label} />
         </Link>
       ))}
     </nav>
