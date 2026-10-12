@@ -10,6 +10,7 @@ function booking(id: string, status: Booking["status"]): Booking {
     reference: id,
     room_id: room.id,
     full_name: "Test",
+    email: "test@example.com",
     phone: "09123456789",
     booking_date: "2026-10-08",
     start_time: "09:00",

@@ -55,6 +55,7 @@ export function RoomSettingsForm({ rooms }: { rooms: Room[] }) {
               </span>
               <div>
                 <CardTitle>Your space</CardTitle>
+                <p className="mt-1 text-xs font-semibold text-primary">Room {room.room_code}</p>
                 <p className="mt-1 text-xs text-muted-foreground">The details that make it yours</p>
               </div>
             </div>

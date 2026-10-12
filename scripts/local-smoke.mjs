@@ -12,7 +12,12 @@ let bookingId;
 async function manifest() {
   return JSON.parse(
     await fs.readFile(
-      new URL("../.next/dev/server/server-reference-manifest.json", import.meta.url),
+      new URL(
+        process.env.SMOKE_BUILD === "production"
+          ? "../.next/server/server-reference-manifest.json"
+          : "../.next/dev/server/server-reference-manifest.json",
+        import.meta.url,
+      ),
       "utf8",
     ),
   );
@@ -60,6 +65,10 @@ try {
     assert.ok([303, 307, 308].includes(denied.status), `${route}: ${denied.status}`);
   }
   console.log("PASS every admin page and Excel export requires login");
+  const deniedNotifications = await fetch(base + "/api/admin/notifications", {
+    redirect: "manual",
+  });
+  assert.equal(deniedNotifications.status, 401);
   await fetch(base + "/admin/login");
   const map = await manifest();
   const loginId = Object.entries(map.node).find(([, a]) => a.exportedName === "login")[0];
@@ -89,6 +98,7 @@ try {
   const input = {
     room_id: room,
     full_name: name,
+    email: "booking-test@example.com",
     phone: "09" + String(Date.now()).slice(-8),
     number_of_people: 7,
     booking_date: date,
@@ -98,6 +108,16 @@ try {
     notes: "Verification",
     website: "",
   };
+  const noEmail = { ...input };
+  delete noEmail.email;
+  const invalidEmail = await fetch(base + "/api/bookings", {
+    method: "POST",
+    headers: { Origin: base, "Content-Type": "application/json" },
+    body: JSON.stringify(noEmail),
+  });
+  assert.equal(invalidEmail.status, 400);
+  const shortCodeAvailability = await fetch(base + `/api/availability?room=IC-001&date=${date}`);
+  assert.equal(shortCodeAvailability.status, 200);
   const submit = () =>
     fetch(base + "/api/bookings", {
       method: "POST",
@@ -112,6 +132,20 @@ try {
     receipt.booking.reference,
   ]);
   bookingId = saved.rows[0].id;
+  const notifications = await fetch(base + "/api/admin/notifications", {
+    headers: { Cookie: cookie },
+  });
+  assert.equal(notifications.status, 200);
+  assert.match(notifications.headers.get("cache-control"), /no-store/);
+  const feed = (await notifications.json()).bookings;
+  const notification = feed.find((item) => item.id === bookingId);
+  assert.ok(notification);
+  assert.equal(notification.full_name, name);
+  assert.equal("email" in notification, false);
+  assert.equal("phone" in notification, false);
+  console.log(
+    "PASS new request in authenticated notification feed; private contact fields omitted",
+  );
   console.log("PASS concurrent HTTP requests: one saved, one rejected");
   let schedule = await pool.query("select * from public.public_schedule($1,$2,$2)", [room, date]);
   assert.ok(!schedule.rows.some((b) => b.start_time === "10:00:00"));
@@ -135,6 +169,39 @@ try {
   assert.equal(approval.status, 200, await approval.text());
   const status = await pool.query("select status from public.bookings where id=$1", [bookingId]);
   assert.equal(status.rows[0].status, "approved");
+  const queued = await pool.query(
+    "select state,decision,recipient from public.booking_emails where booking_id=$1",
+    [bookingId],
+  );
+  assert.equal(queued.rowCount, 1);
+  assert.equal(queued.rows[0].decision, "approved");
+  assert.equal(queued.rows[0].recipient, input.email);
+  const retryId = Object.entries(actions.node).find(
+    ([, action]) => action.exportedName === "retryBookingEmail",
+  )[0];
+  const retryEmail = await fetch(base + "/admin/bookings", {
+    method: "POST",
+    headers: {
+      Origin: base,
+      Cookie: cookie,
+      "Next-Action": retryId,
+      "Content-Type": "text/plain;charset=UTF-8",
+    },
+    body: JSON.stringify([bookingId]),
+  });
+  assert.equal(retryEmail.status, 200);
+  assert.equal(
+    (
+      await pool.query(
+        "select count(*)::integer as count from public.booking_emails where booking_id=$1",
+        [bookingId],
+      )
+    ).rows[0].count,
+    1,
+  );
+  console.log(
+    "PASS required email, short room code, transactional approval email and authenticated retry",
+  );
   schedule = await pool.query("select * from public.public_schedule($1,$2,$2)", [room, date]);
   assert.ok(schedule.rows.some((b) => b.start_time === "10:00:00"));
   console.log("PASS administrator approval updates public schedule");

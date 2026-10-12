@@ -10,6 +10,7 @@ test("Excel report has formatted sheets, correct cached formulas, filters and pr
     reference: "IC-20261008-000AAA",
     room_id: room.id,
     full_name: "=SUM(1,2)",
+    email: "test@example.com",
     phone: "09123456789",
     number_of_people: 10,
     booking_date: "2026-10-08",
@@ -41,6 +42,7 @@ test("Excel report has formatted sheets, correct cached formulas, filters and pr
   assert.equal(overview.getCell("B15").result, 9);
   const data = workbook.getWorksheet("Bookings")!;
   assert.equal(data.getCell("D6").value, "09123456789");
+  assert.equal(data.getCell("N6").value, "test@example.com");
   assert.equal(data.getCell("C6").value, "=SUM(1,2)");
   assert.equal(data.getCell("C6").type, ExcelJS.ValueType.String);
   const time = data.getCell("F6").value;

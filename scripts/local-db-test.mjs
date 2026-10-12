@@ -10,6 +10,7 @@ try {
   await pool.query(
     await fs.readFile(new URL("../supabase/tests/constraints.sql", import.meta.url), "utf8"),
   );
+  await pool.query(await fs.readFile(new URL("../supabase/tests/booking_email.sql", import.meta.url), "utf8"));
   const id = randomUUID();
   await pool.query(
     "insert into public.rooms(id,name,capacity,opening_time,closing_time,minimum_booking_minutes,maximum_booking_minutes,booking_interval_minutes) values($1,'Concurrent test',30,'09:00','18:00',60,360,30)",

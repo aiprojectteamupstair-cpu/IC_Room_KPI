@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
           (!status || b.status === status) &&
           (!purpose || b.purpose === purpose) &&
           (!search ||
-            [b.full_name, b.phone, b.reference].some((v) =>
+            [b.full_name, b.email || "", b.phone, b.reference].some((v) =>
               v.toLowerCase().includes(search.toLowerCase()),
             )),
       )

@@ -4,6 +4,7 @@ import { today } from "@/lib/booking/time";
 export const bookingSchema = z.object({
   room_id: z.string().uuid(),
   full_name: z.string().trim().min(2, "Enter your full name").max(100),
+  email: z.string().trim().email("Enter a valid email address").max(254).toLowerCase(),
   phone: z
     .string()
     .trim()

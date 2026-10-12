@@ -6,4 +6,5 @@ node_modules/
 *.tsbuildinfo
 coverage/
 .local/
+supabase/.temp/
 outputs/

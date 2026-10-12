@@ -49,7 +49,7 @@ export function BookingCalendar({
   const days = eachDayOfInterval(monthRange(date));
   const base = basePath || (admin ? "/admin/calendar" : "/schedule");
   const href = (day: Date) =>
-    base + "?" + new URLSearchParams({ date: format(day, "yyyy-MM-dd"), room: room.id });
+    base + "?" + new URLSearchParams({ date: format(day, "yyyy-MM-dd"), room: room.room_code });
   const selectedEvents = events
     .filter((event) => event.booking_date === date)
     .sort((a, b) => a.start_time.localeCompare(b.start_time));

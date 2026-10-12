@@ -15,7 +15,7 @@ function reportError(label, error) {
   console.error(`FAIL ${label}: ${error.code || "network/configuration"}: ${error.message}`);
   if (["PGRST205", "42P01", "PGRST202", "42703"].includes(error.code))
     console.error(
-      "Check that both supabase/migrations SQL files were applied to this hosted project in filename order. Do not rerun the initial migration over an existing schema.",
+      "Check that all supabase/migrations SQL files were applied to this hosted project in filename order. Do not rerun the initial migration over an existing schema.",
     );
   else if (error.code === "42501")
     console.error(

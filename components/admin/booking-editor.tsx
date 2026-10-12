@@ -42,6 +42,7 @@ export function BookingEditor({
               {
                 room_id: selected,
                 full_name: form.get("full_name"),
+                email: form.get("email"),
                 phone: form.get("phone"),
                 number_of_people: Number(form.get("people")),
                 booking_date: form.get("date"),
@@ -56,6 +57,7 @@ export function BookingEditor({
             if ("error" in result) toast.error(result.error);
             else {
               toast.success(booking ? "Booking updated" : "Booking created");
+              if (result.warning) toast.warning(result.warning, { duration: 8000 });
               onOpenChange(false);
             }
           })
@@ -73,6 +75,17 @@ export function BookingEditor({
           </select>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label htmlFor="editor-email">Email address</label>
+            <input
+              id="editor-email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              defaultValue={booking?.email || ""}
+            />
+          </div>
           <div>
             <label htmlFor="editor-name">Full name</label>
             <input id="editor-name" name="full_name" required defaultValue={booking?.full_name} />

@@ -34,7 +34,7 @@ After initial setup, `npm run dev` checks connectivity and room access before op
 
 To host with Supabase:
 
-1. Create a project and run **both** files in `supabase/migrations/` in filename order using the SQL Editor, as the database owner. Alternatively use Supabase CLI: `supabase link --project-ref YOUR_REF`, then `supabase db push`.
+1. Create a project and run **all** files in `supabase/migrations/` in filename order using the SQL Editor, as the database owner. Alternatively use Supabase CLI: `supabase link --project-ref YOUR_REF`, then `supabase db push`.
 2. Run `supabase/seed.sql` to add the initial room. It contains no sample bookings or customer data.
 3. Set Vercel's **Production** environment to `DATABASE_PROVIDER=supabase`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, and `DEMO_MODE=false`. Legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are also supported. Use keys from the same Supabase project as the URL. Redeploy after changing environment variables; public values are embedded during the build. See `.env.production.example`. Local database variables are not used by the Supabase provider. Never copy `local/bootstrap.sql` to Supabase; Supabase already supplies its Auth schema and roles.
 4. Create a confirmed Auth user in Supabase Dashboard → Authentication → Users → Add user. Provision the profile as an operator:
@@ -60,7 +60,30 @@ npm run db:supabase:check
 
 This performs the same anonymous rooms query as the page, then checks `public_schedule`, `busy_slots`, and `unavailable_ranges`. It does not write data or print records or keys. Missing tables/functions indicate missing migrations; `42501` indicates missing permissions. Check Data API settings if `public` is not exposed. An empty room list requires an active room; `supabase/seed.sql` adds the initial room without bookings. Do not rerun the initial migration on an existing schema or disable RLS to hide an access error.
 
-### Environment variables
+### Booking decision emails (Gmail SMTP)
+
+Admin Settings includes **Test Gmail connection**, which checks the deployed environment's SMTP login without sending a message. `EAUTH` means Gmail rejected the login: create a new App Password for the exact `SMTP_USER` account, update the active host's `SMTP_PASSWORD`, and restart/redeploy. Spaces and pasted surrounding quotes in Gmail App Passwords are normalized. Booking details show the recorded delivery error and allow adding a missing email to an older booking without changing its dates or times.
+
+The admin header includes a notification bell, unread badge and recent booking history. New bookings show a toast with a direct link to the booking. Supabase changes trigger immediate checks; an authenticated feed polls every three seconds while the tab is visible as a fallback and supports local PostgreSQL too. Polls and realtime events are deduplicated, and notification read state is stored separately per admin account in the browser.
+
+New booking requests require an email address. Approving or rejecting a booking queues a decision email in the same database transaction and the application attempts to send it immediately. Automatic approvals and new manual bookings also send confirmation. Administrators can see the customer email, delivery status, and **Retry email** in booking details. Customer emails are included only in private admin data and exports, never public calendar/availability responses.
+
+For `innovation.centre4@gmail.com`, enable Google **2-Step Verification** and create an [App Password](https://support.google.com/accounts/answer/185833). In Vercel's Production environment, set:
+
+```text
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=innovation.centre4@gmail.com
+SMTP_PASSWORD=YOUR_GOOGLE_APP_PASSWORD
+```
+
+Use the App Password rather than the normal Gmail login password. All four values are server-only. Redeploy after setting them. The hosted Supabase provider also needs `SUPABASE_SECRET_KEY` (or `SUPABASE_SERVICE_ROLE_KEY`) for the restricted email queue RPCs. To verify SMTP without sending email, place the values in gitignored `.env.production.local` and run `npm run email:smtp:check`.
+
+Without SMTP credentials, decisions still save and the email remains queued with an administrator warning. Retry from booking details after configuring SMTP. A lease prevents simultaneous workers from claiming a job; sent jobs are excluded from retries. SMTP cannot guarantee exactly-once delivery if the mail server accepts a message immediately before a worker crashes or the database acknowledgement fails. The email's fixed Message-ID remains the same when retrying. “Accepted by the mail server” confirms SMTP acceptance, not inbox delivery.
+
+Older bookings retain a missing email instead of a fabricated address. Add a genuine customer address before deciding a pending request. Adding one to an older approved booking queues its confirmation. Rooms retain UUID foreign keys while showing stable short codes such as `IC-001` in the UI and calendar URLs; old UUID URLs still work.
+
+### Environment variable reference
 
 | Variable                               | Usage                                                                                          |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------- |

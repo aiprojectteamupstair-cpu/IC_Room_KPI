@@ -86,7 +86,7 @@ export async function buildWorkbook(
     details,
     "Booking register",
     `Source: centre database · Exported ${new Date().toISOString()} · Contains private customer information`,
-    "M",
+    "N",
   );
   const headers = [
     "Booking reference",
@@ -102,8 +102,9 @@ export async function buildWorkbook(
     "Status",
     "Created (Myanmar)",
     "Notes",
+    "Email",
   ];
-  details.columns = [24, 32, 24, 20, 16, 14, 14, 12, 12, 24, 16, 24, 45].map((width) => ({
+  details.columns = [24, 32, 24, 20, 16, 14, 14, 12, 12, 24, 16, 24, 45, 34].map((width) => ({
     width,
   }));
   header(details, 5, headers);
@@ -122,10 +123,11 @@ export async function buildWorkbook(
       b.status,
       new Date(new Date(b.created_at).getTime() + 390 * 60000),
       b.notes,
+      b.email || "",
     ]);
   const last = Math.max(6, bookings.length + 5);
   body(details, 6, last);
-  details.autoFilter = `A5:M${last}`;
+  details.autoFilter = `A5:N${last}`;
   details.views = [{ state: "frozen", xSplit: 2, ySplit: 5 }];
   details.getColumn(5).numFmt = "dd mmm yyyy";
   details.getColumn(6).numFmt = "h:mm AM/PM";

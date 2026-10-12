@@ -12,6 +12,7 @@ export const purposes = [
 ] as const;
 export interface Room {
   id: string;
+  room_code: string;
   name: string;
   description: string;
   capacity: number;
@@ -28,6 +29,7 @@ export interface Booking {
   reference: string;
   room_id: string;
   full_name: string;
+  email: string | null;
   phone: string;
   number_of_people: number;
   booking_date: string;

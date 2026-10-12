@@ -5,12 +5,26 @@ import { LogOut, ArrowUpRight, UserRound, ChevronLeft } from "lucide-react";
 import { Brand } from "@/components/layout/brand";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { logout } from "@/app/actions/auth";
-export function AdminSidebar({ name, demo }: { name: string; demo: boolean }) {
+import { BookingNotifications } from "./booking-notifications";
+import type { BookingNotification } from "@/lib/admin/notification-feed";
+export function AdminSidebar({
+  name,
+  demo,
+  accountId,
+  notifications,
+  realtime,
+}: {
+  name: string;
+  demo: boolean;
+  accountId: string;
+  notifications: BookingNotification[];
+  realtime: boolean;
+}) {
   const pathname = usePathname();
   return (
     <>
       <header className="app-bar sticky top-0 z-30">
-        <div className="mx-auto grid min-h-18 max-w-[1200px] grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2 px-4 sm:min-h-20 sm:px-8">
+        <div className="mx-auto grid min-h-18 max-w-[1200px] grid-cols-[44px_minmax(0,1fr)_96px] items-center gap-2 px-4 sm:min-h-20 sm:px-8">
           {pathname === "/admin" ? (
             <span />
           ) : (
@@ -23,37 +37,44 @@ export function AdminSidebar({ name, demo }: { name: string; demo: boolean }) {
             </Link>
           )}
           <Brand href="/admin" />
-          <details className="relative">
-            <summary
-              aria-label="Open account menu"
-              className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-full border border-white bg-[#e8edf5] text-xs font-semibold text-slate-600"
-            >
-              {name
-                .split(" ")
-                .map((part) => part[0])
-                .slice(0, 2)
-                .join("") || <UserRound size={19} />}
-            </summary>
-            <div className="account-menu">
-              <p className="text-sm font-semibold">{name}</p>
-              <p className="mb-3 mt-1 text-xs text-muted-foreground">
-                {demo ? "Read-only demo" : "Administrator"}
-              </p>
-              <Link
-                href="/schedule"
-                className="flex min-h-11 items-center justify-between gap-3 rounded-xl px-3 text-sm hover:bg-muted"
+          <div className="flex items-center justify-end gap-2">
+            <BookingNotifications
+              initial={notifications}
+              realtime={realtime}
+              accountId={accountId}
+            />
+            <details className="relative">
+              <summary
+                aria-label="Open account menu"
+                className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-full border border-white bg-[#e8edf5] text-xs font-semibold text-slate-600"
               >
-                Visit public calendar
-                <ArrowUpRight size={16} />
-              </Link>
-              <form action={logout}>
-                <button className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm text-primary hover:bg-red-50">
-                  <LogOut size={16} />
-                  Sign out
-                </button>
-              </form>
-            </div>
-          </details>
+                {name
+                  .split(" ")
+                  .map((part) => part[0])
+                  .slice(0, 2)
+                  .join("") || <UserRound size={19} />}
+              </summary>
+              <div className="account-menu">
+                <p className="text-sm font-semibold">{name}</p>
+                <p className="mb-3 mt-1 text-xs text-muted-foreground">
+                  {demo ? "Read-only demo" : "Administrator"}
+                </p>
+                <Link
+                  href="/schedule"
+                  className="flex min-h-11 items-center justify-between gap-3 rounded-xl px-3 text-sm hover:bg-muted"
+                >
+                  Visit public calendar
+                  <ArrowUpRight size={16} />
+                </Link>
+                <form action={logout}>
+                  <button className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm text-primary hover:bg-red-50">
+                    <LogOut size={16} />
+                    Sign out
+                  </button>
+                </form>
+              </div>
+            </details>
+          </div>
         </div>
       </header>
       <BottomNav admin />

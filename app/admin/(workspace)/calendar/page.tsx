@@ -15,7 +15,7 @@ export default async function Calendar({
 }) {
   const params = await searchParams;
   const rooms = await getRooms();
-  const room = rooms.find((r) => r.id === params.room) || rooms[0];
+  const room = rooms.find((r) => r.id === params.room || r.room_code === params.room) || rooms[0];
   if (!room) return <EmptyState title="No room configured" />;
   const date = z.string().date().safeParse(params.date).success ? params.date! : today();
   const range = monthRange(date);
@@ -33,7 +33,9 @@ export default async function Calendar({
         <div className="mb-4 flex flex-wrap gap-2">
           {rooms.map((r) => (
             <Button key={r.id} asChild variant={r.id === room.id ? "secondary" : "outline"}>
-              <Link href={`/admin/calendar?room=${r.id}&date=${date}`}>{r.name}</Link>
+              <Link href={`/admin/calendar?room=${r.room_code}&date=${date}`}>
+                {r.room_code} · {r.name}
+              </Link>
             </Button>
           ))}
         </div>

@@ -74,7 +74,7 @@ export function RoomStatusCard({
             </strong>
           </span>
           <Link
-            href={`/book?room=${room.id}`}
+            href={`/book?room=${room.room_code}`}
             className="flex items-center gap-1 font-semibold text-primary"
           >
             Reserve <ArrowUpRight size={14} />

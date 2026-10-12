@@ -16,7 +16,8 @@ export default async function Schedule({
 }) {
   const params = await searchParams;
   const rooms = (await getRooms()).filter((room) => room.is_active);
-  const room = rooms.find((room) => room.id === params.room) || rooms[0];
+  const room =
+    rooms.find((room) => room.id === params.room || room.room_code === params.room) || rooms[0];
   if (!room)
     return (
       <EmptyState
@@ -69,7 +70,7 @@ export default async function Schedule({
         <div className="mb-5 flex flex-wrap gap-2">
           {rooms.map((item) => (
             <Button key={item.id} asChild variant={item.id === room.id ? "secondary" : "outline"}>
-              <Link href={"/schedule?" + new URLSearchParams({ room: item.id, date })}>
+              <Link href={"/schedule?" + new URLSearchParams({ room: item.room_code, date })}>
                 {item.name}
               </Link>
             </Button>

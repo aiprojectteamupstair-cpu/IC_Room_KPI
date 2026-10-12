@@ -8,6 +8,7 @@ import {
   Clock3,
   Mail,
   MessageCircle,
+  MapPin,
   CheckCircle2,
   Sparkles,
 } from "lucide-react";
@@ -41,6 +42,7 @@ export default async function Explore() {
                   </span>
                   <div>
                     <p className="mb-1 text-xs text-primary">Space to connect</p>
+                    <p className="mb-1 text-xs font-semibold text-primary">{room.room_code}</p>
                     <h2 className="text-xl font-semibold tracking-tight">{room.name}</h2>
                   </div>
                 </div>
@@ -79,6 +81,18 @@ export default async function Explore() {
           <CardContent className="p-5 sm:p-7">
             <h2 className="mb-5 text-lg font-semibold">Contact us</h2>
             <dl className="space-y-5">
+              <div className="flex gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                  <MapPin size={18} aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <dt className="text-sm font-semibold">Address</dt>
+                  <dd className="mt-2 text-sm leading-8 text-muted-foreground" lang="my">
+                    အမှတ်(9A)၊ ဗဟိုလမ်းနှင့်ဇေယျဝတီလမ်းထောင့်၊ သံတံတားရပ်ကွက်၊ စမ်းချောင်းမြို့နယ်၊
+                    ရန်ကုန်မြို့။
+                  </dd>
+                </div>
+              </div>
               <div className="flex gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                   <Mail size={18} aria-hidden="true" />

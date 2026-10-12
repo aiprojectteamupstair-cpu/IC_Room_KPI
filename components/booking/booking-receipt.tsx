@@ -57,7 +57,7 @@ export function BookingReceipt() {
         <h1 className="mt-6 text-center text-2xl font-bold">Booking Request Submitted</h1>
         <p className="mt-3 text-center text-sm leading-6 text-muted-foreground">
           Your booking request has been submitted successfully. The Innovation Centre team will
-          review your request.
+          review your request. Check your email for the approval or rejection update.
         </p>
         <div className="my-6 rounded-xl bg-muted p-4 text-center">
           <p className="eyebrow">Booking reference</p>

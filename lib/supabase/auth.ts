@@ -22,7 +22,7 @@ export async function requireAdmin() {
       rows[0].session_version !== session.version
     )
       redirect("/admin/login");
-    return { name: rows[0].full_name, demo: false };
+    return { id: session.id, name: rows[0].full_name, demo: false };
   }
   if (isDemo()) redirect("/admin/login");
   const db = await supabaseServer();
@@ -38,5 +38,5 @@ export async function requireAdmin() {
     .single();
   if (!profile || !["admin", "super_admin"].includes(profile.role))
     redirect("/admin/login?error=unauthorized");
-  return { name: profile.full_name as string, demo: false };
+  return { id: user.id, name: profile.full_name as string, demo: false };
 }

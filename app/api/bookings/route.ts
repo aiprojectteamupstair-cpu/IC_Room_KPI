@@ -5,6 +5,7 @@ import { getRooms, getBusy } from "@/lib/supabase/queries";
 import { validDurations } from "@/lib/booking/availability";
 import { isDemo, isLocal } from "@/lib/supabase/config";
 import { localQuery } from "@/lib/database/local";
+import { deliverBookingEmails } from "@/lib/email/notifications";
 export async function POST(req: NextRequest) {
   if (req.headers.get("origin") !== req.nextUrl.origin)
     return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
@@ -53,10 +54,11 @@ export async function POST(req: NextRequest) {
       p_minutes: b.duration_minutes,
       p_purpose: b.purpose,
       p_notes: b.notes,
+      p_email: b.email,
     };
     const { data, error } = isLocal()
-      ? await localQuery(
-          "select * from public.create_booking_request($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+      ? await localQuery<{ reference: string; status: string }>(
+          "select * from public.create_booking_request($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
           Object.values(args),
           "service_role",
         )
@@ -78,6 +80,30 @@ export async function POST(req: NextRequest) {
         { error: "The booking could not be submitted. Refresh availability and try again." },
         { status: 400 },
       );
+    }
+    // Automatic approval also queues a confirmation in the booking transaction.
+    if (data![0].status === "approved") {
+      try {
+        const booking = isLocal()
+          ? (
+              await localQuery<{ id: string }>(
+                "select id from public.bookings where reference=$1",
+                [data![0].reference],
+                "service_role",
+              )
+            )[0]
+          : (
+              await bookingService()
+                .from("bookings")
+                .select("id")
+                .eq("reference", data![0].reference)
+                .single()
+            ).data;
+        if (booking) await deliverBookingEmails(booking.id);
+      } catch {
+        // The booking is committed; never report a submission failure for an email failure.
+        console.error("[Booking email] Automatic confirmation remains queued");
+      }
     }
     return NextResponse.json(
       { booking: data![0] },

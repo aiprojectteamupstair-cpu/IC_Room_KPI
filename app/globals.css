@@ -280,3 +280,16 @@ summary::-webkit-details-marker {
     transition: none !important;
   }
 }
+.booking-step {
+  border-radius: 28px;
+  box-shadow: 0 12px 50px rgb(37 48 67 / 4%);
+}
+.booking-portal input:not([type="hidden"]),
+.booking-portal select,
+.booking-portal textarea {
+  background: white;
+  border-color: #dce1e9;
+}
+.booking-portal input[aria-invalid="true"] {
+  border-color: #b51224;
+}

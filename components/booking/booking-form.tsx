@@ -4,7 +4,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowRight, Check, Clock3, ShieldCheck, Users } from "lucide-react";
+import {
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  Clock3,
+  ShieldCheck,
+  Users,
+  Mail,
+  CalendarDays,
+} from "lucide-react";
 import { bookingSchema, type BookingInput } from "@/lib/validation/booking";
 import { validStarts, validDurations } from "@/lib/booking/availability";
 import { today, minutes, timeString, displayTime, displayDate } from "@/lib/booking/time";
@@ -25,6 +34,8 @@ export function BookingForm({
   demo?: boolean;
 }) {
   const router = useRouter();
+  const [step, setStep] = useState(0);
+  const heading = useRef<HTMLHeadingElement>(null);
   const [busy, setBusy] = useState<BusySlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -35,6 +46,7 @@ export function BookingForm({
     watch,
     setValue,
     handleSubmit,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<BookingInput>({
     resolver: zodResolver(
@@ -52,6 +64,7 @@ export function BookingForm({
     defaultValues: {
       room_id: rooms[0].id,
       full_name: "",
+      email: "",
       phone: "",
       number_of_people: 1,
       booking_date: initialDate && initialDate >= today() ? initialDate : today(),
@@ -73,7 +86,7 @@ export function BookingForm({
     setLoadError("");
     setValue("start_time", "");
     setValue("duration_minutes", 0);
-    fetch(`/api/availability?room=${roomId}&date=${date}`, {
+    fetch(`/api/availability?room=${room.room_code}&date=${date}`, {
       signal: controller.signal,
       cache: "no-store",
     })
@@ -104,7 +117,20 @@ export function BookingForm({
     if (!durations.includes(duration)) setValue("duration_minutes", durations[0] || 0);
   }, [start, busy, room, date, duration, setValue]);
   const end = start && duration ? timeString(minutes(start) + duration) : "";
+  const ready = !loading && !loadError && starts.includes(start) && durations.includes(duration);
+  const values = watch();
+  useEffect(() => {
+    heading.current?.focus();
+  }, [step]);
+  async function next() {
+    const fields: (keyof BookingInput)[] =
+      step === 0
+        ? ["room_id", "booking_date", "start_time", "duration_minutes"]
+        : ["full_name", "email", "phone", "number_of_people", "purpose", "notes"];
+    if (await trigger(fields, { shouldFocus: true })) setStep((value) => Math.min(2, value + 1));
+  }
   async function submit(input: BookingInput) {
+    if (!ready || demo) return;
     try {
       const res = await fetch("/api/bookings", {
         method: "POST",
@@ -113,7 +139,10 @@ export function BookingForm({
       });
       const data = await res.json();
       if (!res.ok) {
-        if (res.status === 409) setRetry((r) => r + 1);
+        if (res.status === 409) {
+          setRetry((r) => r + 1);
+          setStep(0);
+        }
         throw new Error(data.error);
       }
       sessionStorage.setItem("ic-booking-receipt", JSON.stringify(data.booking));
@@ -125,12 +154,46 @@ export function BookingForm({
   }
   return (
     <form
-      onSubmit={handleSubmit(submit)}
-      className="grid gap-6 lg:grid-cols-[1.6fr_1fr]"
+      onSubmit={(event) => {
+        if (step < 2) {
+          event.preventDefault();
+          void next();
+        } else void handleSubmit(submit)(event);
+      }}
+      className="booking-portal grid items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(300px,1fr)]"
       noValidate
     >
       <div className="space-y-6">
-        <Card>
+        <ol
+          aria-label="Booking progress"
+          className="grid grid-cols-3 gap-2 rounded-3xl border border-border bg-white p-4 sm:p-6"
+        >
+          {["Choose a time", "Your details", "Review & send"].map((label, index) => (
+            <li key={label} aria-current={step === index ? "step" : undefined}>
+              <button
+                type="button"
+                disabled={index > step || isSubmitting}
+                onClick={() => setStep(index)}
+                className="flex w-full flex-col items-center gap-2 sm:flex-row"
+              >
+                <span
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${index <= step ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}
+                >
+                  {index < step ? <Check size={16} /> : `0${index + 1}`}
+                </span>
+                <span
+                  className={`text-[11px] font-semibold sm:text-xs ${step === index ? "text-foreground" : "text-muted-foreground"}`}
+                >
+                  {label}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ol>
+        <h2 ref={heading} tabIndex={-1} className="sr-only">
+          {["Choose a time", "Your details", "Review your booking"][step]}
+        </h2>
+        <Card className={step === 0 ? "booking-step" : "hidden"}>
           <CardHeader>
             <CardTitle>
               <span className="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#fff0ed] text-xs text-primary">
@@ -141,13 +204,16 @@ export function BookingForm({
             <span className="text-xs text-muted-foreground">Asia/Yangon</span>
           </CardHeader>
           <CardContent className="space-y-5">
+            <p className="text-sm leading-6 text-muted-foreground">
+              Choose a day that works for you. Pick an available time below to get started.
+            </p>
             {rooms.length > 1 && (
               <div>
                 <label htmlFor="room">Room</label>
                 <select id="room" {...register("room_id")}>
                   {rooms.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.name}
+                      {r.room_code} · {r.name}
                     </option>
                   ))}
                 </select>
@@ -158,19 +224,44 @@ export function BookingForm({
               <input id="booking-date" type="date" min={today()} {...register("booking_date")} />
               {errors.booking_date && <p className="field-error">{errors.booking_date.message}</p>}
             </div>
-            <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-5">
               <div>
                 <label htmlFor="start">Start time</label>
-                <select id="start" disabled={loading || !!loadError} {...register("start_time")}>
-                  <option value="">
-                    {loading ? "Loading availability…" : "Select an available time"}
-                  </option>
-                  {starts.map((s) => (
-                    <option key={s} value={s}>
-                      {displayTime(s)}
-                    </option>
-                  ))}
-                </select>
+                <input id="start" type="hidden" {...register("start_time")} />
+                {loading ? (
+                  <p role="status" className="rounded-xl bg-muted p-4 text-sm">
+                    Checking availability…
+                  </p>
+                ) : loadError ? (
+                  <div role="alert">
+                    <p className="field-error">{loadError}</p>
+                    <Button type="button" variant="outline" onClick={() => setRetry((r) => r + 1)}>
+                      Retry
+                    </Button>
+                  </div>
+                ) : starts.length ? (
+                  <div
+                    role="group"
+                    aria-label="Available start times"
+                    className="grid grid-cols-3 gap-2 sm:grid-cols-4"
+                  >
+                    {starts.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        aria-pressed={start === s}
+                        onClick={() => setValue("start_time", s, { shouldValidate: true })}
+                        className={`min-h-12 rounded-xl border px-2 text-sm font-semibold ${start === s ? "border-primary bg-primary text-white" : "border-border hover:border-primary hover:bg-[#fff5f1]"}`}
+                      >
+                        {displayTime(s)}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-xl bg-muted p-4 text-sm">
+                    No available times. Try another day.
+                  </p>
+                )}
                 {errors.start_time && <p className="field-error">{errors.start_time.message}</p>}
               </div>
               <div>
@@ -207,7 +298,7 @@ export function BookingForm({
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className={step === 1 ? "booking-step" : "hidden"}>
           <CardHeader>
             <CardTitle>
               <span className="mr-3 inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#fff0ed] text-xs text-primary">
@@ -217,6 +308,30 @@ export function BookingForm({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
+            <div>
+              <label htmlFor="email">Email address</label>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                {...register("email")}
+                aria-invalid={!!errors.email}
+                aria-describedby="email-help email-error"
+              />
+              <p
+                id="email-help"
+                className="mt-2 flex items-center gap-2 text-xs text-muted-foreground"
+              >
+                <Mail size={14} />
+                We’ll email you when your request is approved or declined.
+              </p>
+              {errors.email && (
+                <p id="email-error" role="alert" className="field-error">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
                 <label htmlFor="name">Full name</label>
@@ -285,20 +400,94 @@ export function BookingForm({
             </div>
           </CardContent>
         </Card>
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        {step === 2 && (
+          <Card className="booking-step">
+            <CardHeader>
+              <CardTitle>Review your booking</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-5 text-sm text-muted-foreground">
+                Check your details before sending your request.
+              </p>
+              <dl className="divide-y divide-border rounded-2xl border border-border px-4">
+                {[
+                  ["Room", `${room.room_code} · ${room.name}`],
+                  ["Date", displayDate(date)],
+                  [
+                    "Time",
+                    start && end ? `${displayTime(start)} – ${displayTime(end)}` : "Choose a time",
+                  ],
+                  ["Name", values.full_name],
+                  ["Email", values.email],
+                  ["Phone", values.phone],
+                  ["People", String(values.number_of_people)],
+                  ["Activity", values.purpose],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
+                    <dt className="text-muted-foreground">{label}</dt>
+                    <dd className="max-w-full break-words font-semibold">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {values.notes && (
+                <p className="mt-4 whitespace-pre-wrap rounded-2xl bg-muted p-4 text-sm">
+                  {values.notes}
+                </p>
+              )}
+              <p className="mt-5 rounded-2xl bg-[#fff5f1] p-4 text-sm leading-6">
+                {room.approval_mode === "manual"
+                  ? "Your time is held while our team reviews your request. We’ll send the decision to your email."
+                  : "Your booking is confirmed immediately. We’ll send a confirmation to your email."}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        <div className="flex flex-col gap-4 rounded-3xl border border-border bg-white p-5">
           <p className="flex max-w-sm items-start gap-2 text-xs leading-5 text-muted-foreground">
             <ShieldCheck size={18} className="shrink-0" />
             Your personal details are kept private. Requests are reviewed by the Innovation Centre
             team.
           </p>
-          <Button
-            type="submit"
-            size="lg"
-            disabled={isSubmitting || loading || !!loadError || !start || !duration || demo}
-          >
-            {isSubmitting ? "Submitting…" : "Submit booking request"}
-            <ArrowRight size={16} />
-          </Button>
+          <div className="flex items-center justify-between gap-3">
+            {step > 0 ? (
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isSubmitting}
+                onClick={() => setStep((s) => s - 1)}
+              >
+                <ArrowLeft size={16} />
+                Back
+              </Button>
+            ) : (
+              <span className="text-xs text-muted-foreground">No account needed</span>
+            )}
+            {step < 2 ? (
+              <Button
+                key="continue"
+                type="button"
+                size="lg"
+                disabled={step === 0 && !ready}
+                onClick={(event) => {
+                  event.preventDefault();
+                  void next();
+                }}
+              >
+                Continue
+                <ArrowRight size={16} />
+              </Button>
+            ) : (
+              <Button
+                key="submit"
+                type="submit"
+                size="lg"
+                disabled={isSubmitting || !ready || demo}
+              >
+                {isSubmitting ? "Sending…" : "Send booking request"}
+                <ArrowRight size={16} />
+              </Button>
+            )}
+          </div>
         </div>
         {demo && (
           <p className="text-sm text-amber-800">
@@ -306,7 +495,39 @@ export function BookingForm({
           </p>
         )}
       </div>
-      <aside className="space-y-5">
+      <aside className="space-y-5 lg:sticky lg:top-24">
+        <Card className="border-[#f4ded8] bg-[#fff5f1]">
+          <CardContent className="p-6">
+            <p className="mb-3 text-xs font-bold text-primary">{room.room_code}</p>
+            <h2 className="text-xl font-semibold tracking-tight">{room.name}</h2>
+            <dl
+              aria-live="polite"
+              className="mt-5 space-y-3 border-t border-[#f4ded8] pt-5 text-sm"
+            >
+              <div className="flex justify-between gap-2">
+                <dt className="flex items-center gap-2 text-muted-foreground">
+                  <CalendarDays size={15} />
+                  Date
+                </dt>
+                <dd className="text-right font-semibold">
+                  {date ? displayDate(date) : "Choose a date"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-muted-foreground">Your session</dt>
+                <dd className="text-right font-semibold">
+                  {start && end ? `${displayTime(start)}–${displayTime(end)}` : "Choose a time"}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-muted-foreground">People</dt>
+                <dd className="font-semibold">
+                  {values.number_of_people || "—"} / {room.capacity}
+                </dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>Availability</CardTitle>
@@ -325,7 +546,7 @@ export function BookingForm({
             ) : loadError ? (
               <div role="alert">
                 <p className="mb-3 text-sm text-red-700">{loadError}</p>
-                <Button variant="outline" onClick={() => setRetry((r) => r + 1)}>
+                <Button type="button" variant="outline" onClick={() => setRetry((r) => r + 1)}>
                   Retry availability
                 </Button>
               </div>
@@ -357,7 +578,9 @@ export function BookingForm({
               </p>
               <p className="flex items-center gap-2">
                 <Check size={15} />
-                Pending approval after submission
+                {room.approval_mode === "manual"
+                  ? "Team review after submission"
+                  : "Instant confirmation"}
               </p>
             </div>
           </CardContent>

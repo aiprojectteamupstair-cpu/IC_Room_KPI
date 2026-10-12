@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Plus, Eye, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import type { Booking, Room } from "@/types";
@@ -15,6 +16,9 @@ import { displayTime, displayDate } from "@/lib/booking/time";
 import { formatInTimeZone } from "@/lib/utils/date";
 import { ExportButton } from "./export-button";
 export function BookingsTable({ bookings, rooms }: { bookings: Booking[]; rooms: Room[] }) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const requestedId = searchParams.get("booking");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [date, setDate] = useState("");
@@ -25,13 +29,16 @@ export function BookingsTable({ bookings, rooms }: { bookings: Booking[]; rooms:
   const [editing, setEditing] = useState<Booking | undefined>();
   const [editor, setEditor] = useState(false);
   const [pending, run] = useTransition();
+  useEffect(() => {
+    if (requestedId) setSelected(bookings.find((booking) => booking.id === requestedId) || null);
+  }, [requestedId, bookings]);
   const rows = useMemo(
     () =>
       bookings
         .filter(
           (b) =>
             (!search ||
-              [b.full_name, b.phone, b.reference].some((v) =>
+              [b.full_name, b.email || "", b.phone, b.reference].some((v) =>
                 v.toLowerCase().includes(search.toLowerCase()),
               )) &&
             (!status || b.status === status) &&
@@ -62,7 +69,10 @@ export function BookingsTable({ bookings, rooms }: { bookings: Booking[]; rooms:
     run(async () => {
       const result = await changeStatus(booking.id, "approved");
       if ("error" in result) toast.error(result.error);
-      else toast.success("Booking approved");
+      else {
+        toast.success("Booking approved");
+        if (result.warning) toast.warning(result.warning, { duration: 8000 });
+      }
     });
   }
   return (
@@ -315,7 +325,14 @@ export function BookingsTable({ bookings, rooms }: { bookings: Booking[]; rooms:
       </Card>
       <BookingDetailsDialog
         booking={selected}
-        onClose={() => setSelected(null)}
+        onClose={() => {
+          setSelected(null);
+          if (requestedId) {
+            const params = new URLSearchParams(searchParams.toString());
+            params.delete("booking");
+            router.replace(`/admin/bookings${params.size ? `?${params}` : ""}`, { scroll: false });
+          }
+        }}
         onEdit={(b) => {
           setSelected(null);
           setEditing(b);
